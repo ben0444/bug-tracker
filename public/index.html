@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מערכת דיווח באגים</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen">
+    <div class="login-box">
+      <div class="login-logo">🐛</div>
+      <h1>מערכת דיווח באגים</h1>
+      <p class="login-subtitle">התחבר כדי להמשיך</p>
+      <div id="login-error" class="error-msg hidden"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>שם משתמש</label>
+          <input type="text" id="login-username" placeholder="הכנס שם משתמש" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>סיסמה</label>
+          <input type="password" id="login-password" placeholder="הכנס סיסמה" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">התחבר</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-screen" class="screen hidden">
+    <nav class="navbar">
+      <div class="nav-brand">🐛 מערכת דיווח באגים</div>
+      <div class="nav-links">
+        <button class="nav-btn active" data-page="bugs" onclick="showPage('bugs')">רשימת באגים</button>
+        <button class="nav-btn" data-page="stats" onclick="showPage('stats')">סטטיסטיקות</button>
+        <button class="nav-btn admin-only hidden" data-page="users" onclick="showPage('users')">ניהול משתמשים</button>
+      </div>
+      <div class="nav-user">
+        <span id="nav-username"></span>
+        <span id="nav-role" class="role-badge"></span>
+        <button class="btn btn-outline btn-sm" onclick="logout()">יציאה</button>
+      </div>
+    </nav>
+
+    <!-- Bugs Page -->
+    <div id="page-bugs" class="page">
+      <div class="page-header">
+        <h2>דיווחי באגים</h2>
+        <button class="btn btn-primary" onclick="openNewBugModal()">+ באג חדש</button>
+      </div>
+
+      <div class="filters-bar">
+        <input type="text" id="filter-search" placeholder="🔍 חיפוש..." oninput="loadBugs()">
+        <select id="filter-status" onchange="loadBugs()">
+          <option value="">כל הסטטוסים</option>
+          <option>פתוח</option>
+          <option>בטיפול</option>
+          <option>בבדיקה</option>
+          <option>נפתר</option>
+          <option>סגור</option>
+        </select>
+        <select id="filter-priority" onchange="loadBugs()">
+          <option value="">כל העדיפויות</option>
+          <option>קריטי</option>
+          <option>גבוה</option>
+          <option>בינוני</option>
+          <option>נמוך</option>
+        </select>
+        <select id="filter-device" onchange="loadBugs()">
+          <option value="">כל המכשירים</option>
+          <option>דסקטופ</option>
+          <option>מובייל</option>
+          <option>טאבלט</option>
+          <option>ווב</option>
+          <option>אחר</option>
+        </select>
+      </div>
+
+      <div id="bugs-list" class="bugs-grid"></div>
+    </div>
+
+    <!-- Stats Page -->
+    <div id="page-stats" class="page hidden">
+      <div class="page-header"><h2>סטטיסטיקות</h2></div>
+      <div id="stats-content" class="stats-grid"></div>
+    </div>
+
+    <!-- Users Page (Admin) -->
+    <div id="page-users" class="page hidden">
+      <div class="page-header">
+        <h2>ניהול משתמשים</h2>
+        <button class="btn btn-primary" onclick="openNewUserModal()">+ משתמש חדש</button>
+      </div>
+      <div id="users-list"></div>
+    </div>
+  </div>
+
+  <!-- Bug Modal -->
+  <div id="bug-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeBugModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 id="bug-modal-title">באג חדש</h3>
+        <button class="modal-close" onclick="closeBugModal()">✕</button>
+      </div>
+      <div id="bug-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Bug Detail Modal -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-xlarge">
+      <div class="modal-header">
+        <h3 id="detail-modal-title"></h3>
+        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      </div>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- User Modal -->
+  <div id="user-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeUserModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>משתמש חדש</h3>
+        <button class="modal-close" onclick="closeUserModal()">✕</button>
+      </div>
+      <div id="user-modal-body">
+        <div id="user-error" class="error-msg hidden"></div>
+        <form id="user-form" onsubmit="createUser(event)">
+          <div class="form-group">
+            <label>שם משתמש</label>
+            <input type="text" id="new-username" required>
+          </div>
+          <div class="form-group">
+            <label>סיסמה</label>
+            <input type="password" id="new-password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label>תפקיד</label>
+            <select id="new-role">
+              <option value="user">משתמש</option>
+              <option value="admin">מנהל</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">צור משתמש</button>
+            <button type="button" class="btn btn-outline" onclick="closeUserModal()">ביטול</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
