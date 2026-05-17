@@ -218,6 +218,9 @@ app.delete('/api/comments/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Health check (public — for Railway deployment)
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 // Stats
 app.get('/api/stats', requireAuth, (req, res) => {
   const total = db.prepare('SELECT COUNT(*) as c FROM bugs').get().c;
